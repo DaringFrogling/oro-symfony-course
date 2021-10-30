@@ -1,0 +1,61 @@
+version: '3.6'
+
+services:
+
+  oro.symfony-demo-app.nginx:
+    build:
+      context: ./nginx
+    image: oro.symfony-demo-app.nginx:dev
+    container_name: oro.symfony-demo-app.nginx
+    env_file:
+      - .env
+    ports:
+      - "${HOST_NGINX_PORT}:80"
+    links: #deprecated feature
+      - oro.symfony-demo-app.php
+    volumes:
+      - ../public:/var/www/oro-symfony-demo-app/public
+    networks:
+      - dev_network
+
+  oro.symfony-demo-app.php:
+    build:
+      context: ./php
+    image: oro.symfony-demo-app.php:dev
+    container_name: oro.symfony-demo-app.php
+    env_file:
+      - .env
+    environment:
+      UID_VAR: 1000
+      GID_VAR: 1000
+      UID: 1000
+      GID: 1000
+    expose:
+      - 9000
+    #    links:
+    #      - hexlet.db
+    volumes:
+      - ../:/var/www/oro-symfony-demo-app:rw
+    networks:
+      - dev_network
+
+
+#  mysqldb:
+#    image: mysql:${MYSQL_VERSION}
+#    container_name: ${MYSQL_HOST}
+#    restart: always
+#    env_file:
+#      - ".env"
+#    environment:
+#      - MYSQL_DATABASE=${MYSQL_DATABASE}
+#      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+#      - MYSQL_USER=${MYSQL_USER}
+#      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+#    ports:
+#      - "8989:3306"
+#    volumes:
+#      - "./data/db/mysql:/var/lib/mysql"
+
+networks:
+  dev_network:
+    driver: bridge
