@@ -3,13 +3,13 @@
 namespace App\Controller\Api;
 
 use Symfony\Component\HttpFoundation\{Request, Response};
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\{NotFoundHttpException, UnsupportedMediaTypeHttpException};
 use Symfony\Component\Routing\Annotation\Route;
 
 class ApiController
 {
     /**
-     * Returns information about client.
+     * Returns information about client and writes it to log file.
      *
      * @Route("/api/my-info", methods="GET", name="client_info")
      *
@@ -20,7 +20,7 @@ class ApiController
     public function actionClientInfo(Request $request): Response
     {
         if (!$request->headers->get('Content-type: application/json')) {
-            return new Response(null, 415);
+            throw new UnsupportedMediaTypeHttpException();
         }
 
         $clientInfo = [
@@ -53,7 +53,7 @@ class ApiController
     public function actionIndex(Request $request): Response
     {
         if (!$request->headers->get('Content-type: application/json')) {
-            return new Response(null, 415);
+            throw new UnsupportedMediaTypeHttpException();
         }
 
         $data = $this->getDataFromFile();
@@ -81,7 +81,7 @@ class ApiController
     public function actionProduct(Request $request, string $product): Response
     {
         if (!$request->headers->get('Content-type: application/json')) {
-            return new Response(null, 415);
+            throw new UnsupportedMediaTypeHttpException();
         }
 
         $data = $this->getDataFromFile();
@@ -131,7 +131,7 @@ class ApiController
         $responseData = [];
 
         foreach ($data as $product) {
-            $productUri = $this->uriFormatter($product[0]);
+            $productUri = $this->formatUri($product[0]);
             $responseData[] = $request->getSchemeAndHttpHost() . "/{$productUri}";
         }
 
@@ -145,17 +145,17 @@ class ApiController
      *
      * @return string
      */
-    private function uriFormatter(string $product): string
+    private function formatUri(string $product): string
     {
-        $positionToEraseStart = mb_strpos($product, '_');
-        $productName = mb_substr($product, 0, $positionToEraseStart);
-        $productIdSubStr = str_split(mb_substr($product, $positionToEraseStart));
+        $erasePosition = mb_strpos($product, '_');
+        $productName = mb_substr($product, 0, $erasePosition);
+        $productIdSubStr = str_split(mb_substr($product, $erasePosition));
         $productId = [];
 
         foreach ($productIdSubStr as $symbol) {
             if ((int)$symbol >= 1) {
                 $productId[] = $symbol;
-            } elseif (!empty($productId)) {
+            } elseif (is_int($symbol) && !empty($productId)) {
                 $productId[] = $symbol;
             }
         }
