@@ -1,5 +1,9 @@
 COMPOSE_DIR = './devops'
 
+start:
+	sudo ifconfig lo0 alias 10.254.254.254 netmask 255.255.255.2
+	cd $(COMPOSE_DIR) && docker-compose up -d
+
 up:
 	cd $(COMPOSE_DIR) && docker-compose up -d
 
