@@ -2,12 +2,33 @@
 
 namespace App\Controller\Api;
 
-use Symfony\Component\HttpFoundation\{Request, Response};
+use Symfony\Component\HttpFoundation\{JsonResponse, Request};
 use Symfony\Component\HttpKernel\Exception\{NotFoundHttpException, UnsupportedMediaTypeHttpException};
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class ApiController
 {
+    /**
+     * Returns all resources of application.
+     *
+     * @Route("/api", methods="GET", name="list_of_resources")
+     *
+     * @param Request $request
+     * @param UrlGeneratorInterface $urlGenerator
+     *
+     * @return JsonResponse
+     */
+    public function actionIndex(
+        Request $request,
+        UrlGeneratorInterface $urlGenerator,
+    ): JsonResponse {
+        $this->validateRequestContentType($request);
+        $data = $this->getDataFromFile();
+
+        return new JsonResponse($this->generateUrls($data, $urlGenerator));
+    }
+
     /**
      * Returns information about client and writes it to log file.
      *
@@ -15,57 +36,21 @@ class ApiController
      *
      * @param Request $request
      *
-     * @return Response
+     * @return JsonResponse
      */
-    public function actionClientInfo(Request $request): Response
+    public function actionClientInfo(Request $request): JsonResponse
     {
-        if (!$request->headers->get('Content-type: application/json')) {
-            throw new UnsupportedMediaTypeHttpException();
-        }
-
+        $this->validateRequestContentType($request);
         $clientInfo = [
             'ip' => $request->getClientIps()[0],
-            'language' => $request->getLanguages(),
-            'browser' => ($request->headers->get('User-Agent'))
+            'language' => $request->getPreferredLanguage(),
+            'browser' => $request->headers->get('User-Agent')
         ];
-        $responseData = json_encode($clientInfo);
+        $encoded = json_encode($clientInfo);
 
-        file_put_contents('logs.txt', $responseData . PHP_EOL, FILE_APPEND | LOCK_EX);
+        file_put_contents('logs.txt', $encoded . PHP_EOL, FILE_APPEND | LOCK_EX);
 
-        return new Response(
-            $responseData,
-            Response::HTTP_OK,
-            [
-                'Content-type' => 'application/json'
-            ]
-        );
-    }
-
-    /**
-     * Returns all resources of application.
-     *
-     * @Route("/api", methods="GET", name="list_of_resources")
-     *
-     * @param Request $request
-     *
-     * @return Response
-     */
-    public function actionIndex(Request $request): Response
-    {
-        if (!$request->headers->get('Content-type: application/json')) {
-            throw new UnsupportedMediaTypeHttpException();
-        }
-
-        $data = $this->getDataFromFile();
-        $responseData = $this->prepareData($request, $data);
-
-        return new Response(
-            json_encode($responseData),
-            Response::HTTP_OK,
-            [
-                'Content-type' => 'application/json'
-            ]
-        );
+        return new JsonResponse($clientInfo);
     }
 
     /**
@@ -74,21 +59,20 @@ class ApiController
      * @Route("/api/{product}", methods="GET", name="product_id")
      *
      * @param Request $request
+     * @param UrlGeneratorInterface $urlGenerator
      * @param string $product
      *
-     * @return Response
+     * @return JsonResponse
      */
-    public function actionProduct(Request $request, string $product): Response
-    {
-        if (!$request->headers->get('Content-type: application/json')) {
-            throw new UnsupportedMediaTypeHttpException();
-        }
-
+    public function actionProduct(
+        Request $request,
+        UrlGeneratorInterface $urlGenerator,
+        string $product
+    ): JsonResponse {
+        $this->validateRequestContentType($request);
         $data = $this->getDataFromFile();
-        $uris = $this->prepareData($request, $data);
-        $neededProducts = array_filter($uris, function ($item) use ($product) {
-            return str_contains($item, $product);
-        });
+        $urls = $this->generateUrls($data, $urlGenerator);
+        $neededProducts = array_filter($urls, fn ($item) => str_contains($item, $product));
 
         if (empty($neededProducts)) {
             throw new NotFoundHttpException();
@@ -96,13 +80,21 @@ class ApiController
 
         $neededProduct = $data[key($neededProducts)];
 
-        return new Response(
-            json_encode($neededProduct),
-            Response::HTTP_OK,
-            [
-                'Content-type' => 'application/json'
-            ]
-        );
+        return new JsonResponse($neededProduct);
+    }
+
+    /**
+     * Validates request content type.
+     *
+     * @param Request $request
+     *
+     * @throws UnsupportedMediaTypeHttpException
+     */
+    private function validateRequestContentType(Request $request): void
+    {
+        if ($request->getContentType() !== 'json') {
+            throw new UnsupportedMediaTypeHttpException();
+        }
     }
 
     /**
@@ -121,21 +113,23 @@ class ApiController
     /**
      * Returns formatted list of resources.
      *
-     * @param Request $request
      * @param array $data
+     * @param UrlGeneratorInterface $urlGenerator
      *
      * @return array
      */
-    private function prepareData(Request $request, array $data): array
+    private function generateUrls(array $data, UrlGeneratorInterface $urlGenerator): array
     {
-        $responseData = [];
-
-        foreach ($data as $product) {
-            $productUri = $this->formatUri($product[0]);
-            $responseData[] = $request->getSchemeAndHttpHost() . "/{$productUri}";
-        }
-
-        return $responseData;
+        return array_map(
+            fn($item) => $urlGenerator->generate(
+                'product_id',
+                [
+                    'product' => $this->formatUri($item['0'])
+                ],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            ),
+            $data
+        );
     }
 
     /**
@@ -155,7 +149,7 @@ class ApiController
         foreach ($productIdSubStr as $symbol) {
             if ((int)$symbol >= 1) {
                 $productId[] = $symbol;
-            } elseif (is_int($symbol) && !empty($productId)) {
+            } elseif (!empty($productId)) {
                 $productId[] = $symbol;
             }
         }
