@@ -35,7 +35,11 @@ services:
         $sender: '%app.notifications.email_sender%'
 
     App\Controller\Api\ApiController:
-        tags: [controller.service_arguments]
+        tags: [ controller.service_arguments ]
+
+    App\EventListener\ApiContentTypeEventListener:
+        tags:
+          - { name: kernel.event_listener }
 
 when@test:
     services:
