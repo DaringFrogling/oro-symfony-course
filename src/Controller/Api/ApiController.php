@@ -3,9 +3,9 @@
 namespace App\Controller\Api;
 
 use Symfony\Component\HttpFoundation\{JsonResponse, Request};
-use Symfony\Component\HttpKernel\Exception\{NotFoundHttpException, UnsupportedMediaTypeHttpException};
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Routing\{Annotation\Route, Generator\UrlGeneratorInterface};
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ApiController
 {
@@ -14,16 +14,13 @@ class ApiController
      *
      * @Route("/api", methods="GET", name="list_of_resources")
      *
-     * @param Request $request
      * @param UrlGeneratorInterface $urlGenerator
      *
      * @return JsonResponse
      */
     public function actionIndex(
-        Request $request,
         UrlGeneratorInterface $urlGenerator,
     ): JsonResponse {
-        $this->validateRequestContentType($request);
         $data = $this->getDataFromFile();
 
         return new JsonResponse($this->generateUrls($data, $urlGenerator));
@@ -40,7 +37,6 @@ class ApiController
      */
     public function actionClientInfo(Request $request): JsonResponse
     {
-        $this->validateRequestContentType($request);
         $clientInfo = [
             'ip' => $request->getClientIps()[0],
             'language' => $request->getPreferredLanguage(),
@@ -58,18 +54,17 @@ class ApiController
      *
      * @Route("/api/{product}", methods="GET", name="product_id")
      *
-     * @param Request $request
-     * @param UrlGeneratorInterface $urlGenerator
      * @param string $product
+     * @param UrlGeneratorInterface $urlGenerator
+     * @param TranslatorInterface $translator
      *
      * @return JsonResponse
      */
     public function actionProduct(
-        Request $request,
+        string $product,
         UrlGeneratorInterface $urlGenerator,
-        string $product
+        TranslatorInterface $translator,
     ): JsonResponse {
-        $this->validateRequestContentType($request);
         $data = $this->getDataFromFile();
         $urls = $this->generateUrls($data, $urlGenerator);
         $neededProducts = array_filter($urls, fn ($item) => str_contains($item, $product));
@@ -79,22 +74,9 @@ class ApiController
         }
 
         $neededProduct = $data[key($neededProducts)];
+        $translatedKeys = $this->translate($this->getTranslateIds(), $translator);
 
-        return new JsonResponse($neededProduct);
-    }
-
-    /**
-     * Validates request content type.
-     *
-     * @param Request $request
-     *
-     * @throws UnsupportedMediaTypeHttpException
-     */
-    private function validateRequestContentType(Request $request): void
-    {
-        if ($request->getContentType() !== 'json') {
-            throw new UnsupportedMediaTypeHttpException();
-        }
+        return new JsonResponse(array_combine($translatedKeys, $neededProduct));
     }
 
     /**
@@ -156,4 +138,28 @@ class ApiController
 
         return $productName . implode($productId);
     }
+    
+    /**      
+     * Translates keys of the Product object.
+     * 
+     * @param array $translateIdentifiers
+     * @param $translator  
+     * 
+     * @return array
+     */
+    private function translate(array $translateIdentifiers, $translator) : array
+    {
+        return array_map(fn(string $identifier) => $translator->trans($identifier), $translateIdentifiers);
+    }
+
+    /**
+     * Gets identifiers for the translatable keys.
+     *
+     * @return string[]
+     */
+    private function getTranslateIds() : array
+    {
+        return  ['product.article', 'product.name', 'product.description'];
+    }
+
 }
