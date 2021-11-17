@@ -1,0 +1,14 @@
+GET http://oro.symfony-demo-app.local/api
+Accept: application/json
+Content-Type: application/json
+###
+
+GET http://oro.symfony-demo-app.local/api/my-info
+Accept: application/json
+Content-Type: application/json
+###
+
+GET http://oro.symfony-demo-app.local/api/product2
+Accept: application/json
+Content-Type: application/json
+###

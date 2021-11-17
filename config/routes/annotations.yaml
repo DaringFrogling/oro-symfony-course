@@ -6,3 +6,8 @@ controllers:
         _locale: '%app_locales%'
     defaults:
         _locale: '%locale%'
+
+api-controller:
+    resource: '../../src/Controller/Api/'
+    type: annotation
+    
