@@ -12,3 +12,14 @@ GET http://oro.symfony-demo-app.local/api/product2
 Accept: application/json
 Content-Type: application/json
 ###
+
+POST http://oro.symfony-demo-app.local/api/notify
+Accept: application/json
+Content-Type: application/json
+
+{
+  "receiver": "Dmytro",
+  "message": "Hello",
+  "channel": "email"
+}
+###
