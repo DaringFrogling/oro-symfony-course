@@ -118,6 +118,9 @@
     "friendsofphp/proxy-manager-lts": {
         "version": "v1.0.5"
     },
+    "jms/translation-bundle": {
+        "version": "1.6.0"
+    },
     "laminas/laminas-code": {
         "version": "3.4.1"
     },
