@@ -15,10 +15,10 @@ class ApiController
     /**
      * ApiController constructor.
      *
-     * @param NotificationChannelInterface[] $notificationChannels
+     * @param iterable|NotificationChannelInterface[] $notificationChannels
      */
     public function __construct(
-        private $notificationChannels,
+        private iterable $notificationChannels,
     ) {}
 
     /**
@@ -202,6 +202,7 @@ class ApiController
      * Validates request data.
      *
      * @param $data
+     * @throws UnprocessableEntityHttpException
      */
     private function validateWithThrowsException($data)
     {
