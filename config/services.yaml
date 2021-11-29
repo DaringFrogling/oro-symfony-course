@@ -41,6 +41,30 @@ services:
         tags:
           - { name: kernel.event_listener }
 
+    notification_channel.email:
+        class: App\Services\NotificationChannels\EmailNotificationChannel
+        arguments:
+            - '@mailer'
+        tags:
+            - { name: notification.sender }
+
+    App\Services\SendNotificationService:
+        arguments: [ !tagged_iterator notification.sender ]
+
+    notification_channel.telegram:
+        class: App\Services\NotificationChannels\TelegramNotificationChannel
+        arguments:
+            - '@notifier'
+        tags:
+            - { name: notification.sender }
+
+    notification_channel.file_logger:
+        class: App\Services\NotificationChannels\FileLoggerNotificationChannel
+        arguments:
+            - '@monolog.logger'
+        tags:
+            - { name: notification.sender }
+
 when@test:
     services:
         test.user_password_hasher:

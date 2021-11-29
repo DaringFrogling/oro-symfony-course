@@ -2,9 +2,12 @@
 
 namespace App\Controller\Api;
 
+use App\Dto\NotifyRequestDto;
+use App\Services\SendNotificationService;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request};
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\{Annotation\Route, Generator\UrlGeneratorInterface};
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ApiController
@@ -47,6 +50,26 @@ class ApiController
         file_put_contents('logs.txt', $encoded . PHP_EOL, FILE_APPEND | LOCK_EX);
 
         return new JsonResponse($clientInfo);
+    }
+
+    /**
+     * Creates notification though specified channel.
+     *
+     * @Route("/api/notify", methods="POST", name="notify")
+     *
+     * @param Request $request
+     * @param SendNotificationService $sendNotificationService
+     * @return JsonResponse
+     */
+    public function actionNotify(
+        Request $request,
+        SendNotificationService $sendNotificationService,
+    ): JsonResponse {
+        $data = $request->request->all();
+        $this->validateWithThrowsException($data);
+        $sendNotificationService->notify($this->createNotifyDto($data));
+
+        return new JsonResponse();
     }
 
     /**
@@ -138,13 +161,13 @@ class ApiController
 
         return $productName . implode($productId);
     }
-    
-    /**      
+
+    /**
      * Translates keys of the Product object.
-     * 
+     *
      * @param array $translateIdentifiers
-     * @param $translator  
-     * 
+     * @param $translator
+     *
      * @return array
      */
     private function translate(array $translateIdentifiers, $translator) : array
@@ -160,6 +183,38 @@ class ApiController
     private function getTranslateIds() : array
     {
         return  ['product.article', 'product.name', 'product.description'];
+    }
+
+    /**
+     * Validates request data.
+     *
+     * @param $data
+     * @throws UnprocessableEntityHttpException
+     */
+    private function validateWithThrowsException($data)
+    {
+        if (
+            !array_key_exists('receiver', $data)
+            || !array_key_exists('message', $data)
+            || !array_key_exists('channel', $data)
+        ) {
+            throw new UnprocessableEntityHttpException('Request data is not valid');
+        }
+    }
+
+    /**
+     * Creates NotifyRequestDto.
+     *
+     * @param array $data
+     * @return NotifyRequestDto
+     */
+    private function createNotifyDto(array $data): NotifyRequestDto
+    {
+        return new NotifyRequestDto(
+            $data['receiver'],
+            $data['message'],
+            $data['channel'],
+        );
     }
 
 }
