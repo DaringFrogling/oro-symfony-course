@@ -1,14 +1,10 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\NotificationChannels;
 
 use App\Dto\NotifyRequestDto;
-use Symfony\Bridge\Monolog\Handler\NotifierHandler;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
-use Symfony\Component\Notifier\Notification\Notification;
-use Symfony\Component\Notifier\NotifierInterface;
-use Symfony\Component\Notifier\Recipient\Recipient;
+use Symfony\Component\Notifier\{Notification\Notification, NotifierInterface, Recipient\Recipient};
 
 class TelegramNotificationChannel implements NotificationChannelInterface
 {

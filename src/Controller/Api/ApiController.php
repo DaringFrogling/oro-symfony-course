@@ -3,7 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Dto\NotifyRequestDto;
-use App\Services\NotificationChannelInterface;
+use App\Services\SendNotificationService;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request};
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\{Annotation\Route, Generator\UrlGeneratorInterface};
@@ -12,15 +12,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ApiController
 {
-    /**
-     * ApiController constructor.
-     *
-     * @param iterable|NotificationChannelInterface[] $notificationChannels
-     */
-    public function __construct(
-        private iterable $notificationChannels,
-    ) {}
-
     /**
      * Returns all resources of application.
      *
@@ -67,20 +58,16 @@ class ApiController
      * @Route("/api/notify", methods="POST", name="notify")
      *
      * @param Request $request
+     * @param SendNotificationService $sendNotificationService
      * @return JsonResponse
      */
     public function actionNotify(
         Request $request,
+        SendNotificationService $sendNotificationService,
     ): JsonResponse {
         $data = $request->request->all();
         $this->validateWithThrowsException($data);
-        $dto = $this->createNotifyDto($data);
-
-        foreach ($this->notificationChannels as $notificationChannel) {
-            if ($notificationChannel->canSend($dto->getChannel())) {
-                $notificationChannel->sendMessage($dto);
-            }
-        }
+        $sendNotificationService->notify($this->createNotifyDto($data));
 
         return new JsonResponse();
     }

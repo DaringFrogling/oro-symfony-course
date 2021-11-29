@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\NotificationChannels;
 
 use App\Dto\NotifyRequestDto;
 

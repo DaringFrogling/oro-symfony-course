@@ -36,29 +36,30 @@ services:
 
     App\Controller\Api\ApiController:
         tags: [ controller.service_arguments ]
-        arguments: [!tagged_iterator notification.sender]
 
     App\EventListener\ApiContentTypeEventListener:
         tags:
           - { name: kernel.event_listener }
 
     notification_channel.email:
-        class: App\Services\EmailNotificationChannel
+        class: App\Services\NotificationChannels\EmailNotificationChannel
         arguments:
             - '@mailer'
         tags:
             - { name: notification.sender }
 
+    App\Services\SendNotificationService:
+        arguments: [ !tagged_iterator notification.sender ]
 
     notification_channel.telegram:
-        class: App\Services\TelegramNotificationChannel
+        class: App\Services\NotificationChannels\TelegramNotificationChannel
         arguments:
             - '@notifier'
         tags:
             - { name: notification.sender }
 
     notification_channel.file_logger:
-        class: App\Services\FileLoggerNotificationChannel
+        class: App\Services\NotificationChannels\FileLoggerNotificationChannel
         arguments:
             - '@monolog.logger'
         tags:
