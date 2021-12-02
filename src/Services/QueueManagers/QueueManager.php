@@ -31,17 +31,6 @@ class QueueManager implements QueueManagerInterface
     /**
      * @inheritDoc
      */
-    public function dequeue(): array
-    {
-        $queue = $this->getQueue();
-        array_shift($queue);
-
-        return $queue;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function getQueue(): array
     {
         if (!$this->queueExists()) {

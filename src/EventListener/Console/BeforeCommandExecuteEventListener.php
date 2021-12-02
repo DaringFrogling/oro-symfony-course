@@ -4,15 +4,10 @@ namespace App\EventListener\Console;
 
 use App\Command\ChainableCommandInterface;
 use App\Services\QueueManagers\QueueManagerInterface;
-use Symfony\Component\Console\{Command\LockableTrait,
-    Event\ConsoleCommandEvent,
-    Input\ArrayInput,
-    Output\ConsoleOutput};
+use Symfony\Component\Console\{Event\ConsoleCommandEvent, Input\ArrayInput, Output\ConsoleOutput};
 
 class BeforeCommandExecuteEventListener
 {
-    use LockableTrait;
-
     public function __construct(
         private QueueManagerInterface $queueManager,
     ) {
@@ -28,10 +23,10 @@ class BeforeCommandExecuteEventListener
 
         $rootCommand = $this->queueManager->findFirstElement();
         $isRootCommand = $rootCommand === $command->getName();
-        $this->lock(get_class($this));
 
         if ($this->queueManager->queueExists() && !$this->queueManager->isQueueEmpty()) {
             $queue = $this->queueManager->getQueue();
+            
             if (in_array($command->getName(), $queue) && !$isRootCommand) {
                 $event->getInput()->setArgument('chain', 'chained');
             }
@@ -56,16 +51,12 @@ class BeforeCommandExecuteEventListener
             && $isRootCommand
         ) {
             $commandQueue = $this->queueManager->getQueue();
+            
             foreach ($commandQueue as $element) {
                 $nextCommand = $command->getApplication()->find($element);
-                $nextCommand->run(
-                    new ArrayInput([
-                        'command' => $element,
-                        'chain' => 'in_chain',
-                    ]),
-                    new ConsoleOutput()
-                );
+                $nextCommand->run(new ArrayInput([]), new ConsoleOutput());
             }
+            
             $this->queueManager->clear();
             $event->disableCommand();
         }

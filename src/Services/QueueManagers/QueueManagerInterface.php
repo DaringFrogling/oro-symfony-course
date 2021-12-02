@@ -14,11 +14,6 @@ interface QueueManagerInterface
     /**
      * @return array
      */
-    public function dequeue() : array;
-
-    /**
-     * @return array
-     */
     public function getQueue() : array;
 
     /**

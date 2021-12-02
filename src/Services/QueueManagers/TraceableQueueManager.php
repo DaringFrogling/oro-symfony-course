@@ -54,14 +54,6 @@ class TraceableQueueManager implements QueueManagerInterface
     /**
      * @inheritDoc
      */
-    public function dequeue(): array
-    {
-       return $this->originalQueueManager->dequeue();
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function getQueue(): array
     {
         return $this->originalQueueManager->getQueue();
