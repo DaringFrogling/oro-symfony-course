@@ -15,32 +15,8 @@ class NotifyRequestDto
      * @param mixed $channel
      */
     public function __construct(
-        private mixed $receiver,
-        private mixed $message,
-        private mixed $channel,
+        public readonly mixed $receiver,
+        public readonly mixed $message,
+        public readonly mixed $channel,
     ) {}
-
-    /**
-     * @return mixed
-     */
-    public function getReceiver(): mixed
-    {
-        return $this->receiver;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getMessage(): mixed
-    {
-        return $this->message;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getChannel(): mixed
-    {
-        return $this->channel;
-    }
 }
