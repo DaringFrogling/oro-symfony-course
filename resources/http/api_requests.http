@@ -23,3 +23,17 @@ Content-Type: application/json
   "channel": "email"
 }
 ###
+
+GET http://oro.symfony-demo-app.local/api/product/images
+Accept: application/json
+Content-Type: application/json
+###
+
+POST http://oro.symfony-demo-app.local/api/product/generate
+Accept: application/json
+Content-Type: application/json
+
+{
+  "batch-size": 20
+}
+###

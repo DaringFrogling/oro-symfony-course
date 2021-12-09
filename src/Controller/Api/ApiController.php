@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Dto\NotifyRequestDto;
+use App\Repository\ProductRepository;
 use App\Services\SendNotificationService;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request};
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -100,6 +101,28 @@ class ApiController
         $translatedKeys = $this->translate($this->getTranslateIds(), $translator);
 
         return new JsonResponse(array_combine($translatedKeys, $neededProduct));
+    }
+
+
+    /**
+     * Returns all posts' images.                                  z
+     *
+     * @Route("/api/product/images", methods="GET", name="all_images")
+     *
+     * @param Request $request
+     * @param ProductRepository $productRepository
+     *
+     * @return JsonResponse
+     */
+    public function actionGetAllImages(
+        Request $request,
+        ProductRepository $productRepository
+    ): JsonResponse {
+        $page = $request->get('page', 0);
+        $amount = $request->get('per', 10);
+        $data = $productRepository->findAllImagesWithProducts($page, $amount);
+
+        return new JsonResponse($data);
     }
 
     /**
