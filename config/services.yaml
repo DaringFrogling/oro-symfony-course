@@ -18,6 +18,7 @@ services:
             string $locales: '%app_locales%'
             string $defaultLocale: '%locale%'
             string $emailSender: '%app.notifications.email_sender%'
+            string $queue: 'commandQueue.txt'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -44,7 +45,7 @@ services:
     notification_channel.email:
         class: App\Services\NotificationChannels\EmailNotificationChannel
         arguments:
-            - '@mailer'
+            - '@mailer.mailer'
         tags:
             - { name: notification.sender }
 
@@ -64,6 +65,22 @@ services:
             - '@monolog.logger'
         tags:
             - { name: notification.sender }
+
+    App\EventListener\Console\AfterCommandExecuteEventListener:
+        arguments:
+            - '@App\Services\QueueManagers\TraceableQueueManager'
+        tags:
+            - { name: kernel.event_listener }
+
+    App\EventListener\Console\BeforeCommandExecuteEventListener:
+        arguments:
+            - '@App\Services\QueueManagers\TraceableQueueManager'
+        tags:
+            - { name: kernel.event_listener }
+
+    App\Services\QueueManagers\QueueManager: ~
+    App\Services\QueueManagers\TraceableQueueManager:
+        decorates: 'App\Services\QueueManagers\QueueManager'
 
 when@test:
     services:
